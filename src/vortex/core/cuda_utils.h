@@ -9,7 +9,7 @@ cuda and tensorrt utility functions
 bool __check_cuda_runtime(cudaError_t code, const char* op, const char* file, int line);
 
 #ifndef checkRuntime
-#define checkRuntime(op) vortex::__check_cuda_runtime((op), #op, __FILE__, __LINE__)
+#define checkRuntime(op) __check_cuda_runtime((op), #op, __FILE__, __LINE__)
 #endif
 
 #ifndef CHECK

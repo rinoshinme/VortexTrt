@@ -1,16 +1,20 @@
 # VortexTRT
-支持torch转onnx
-支持onnx转tensorrt
-支持tensorrt引擎推理
-暂不支持int8量化  
-不支持从零构建tensorrt引擎
-不支持动态尺寸
-不支持batching
+Tensorrt推理代码
+
+## Features
+- 支持torch转onnx  
+- 支持onnx转tensorrt  
+- 支持tensorrt引擎推理  
+- 暂不支持int8量化  
+- 不支持从零构建tensorrt引擎  
+- 不支持动态尺寸  
+- 不支持batching  
 
 
 ##  支持模型
 - alexnet
-- resnet
+- arcface(pytorch)
+- resnet50
 
 
 ## TODO:

@@ -1,6 +1,7 @@
 #include "simple_infer_engine.h"
 #include <fstream>
 #include <vector>
+#include <opencv2/imgproc/imgproc.hpp>
 #include "vortex/core/cuda_utils.h"
 #include "vortex/utils/fileops.h"
 
@@ -41,8 +42,8 @@ namespace vortex
 
         m_InputInfo = input_info;
         m_OutputInfo = output_info;
-        m_InputBlob = std::make_shared(input_info);
-        m_OutputBlob = std::make_shared(output_info);
+        m_InputBlob = std::make_shared<BlobF>(input_info);
+        m_OutputBlob = std::make_shared<BlobF>(output_info);
 
         return true;
     }
@@ -53,8 +54,8 @@ namespace vortex
 
         // set buffer data
         void* buffers[2] = { nullptr };
-        const int inputIndex = m_Engine->getBindingIndex(m_InputBlob->name);
-        const int outputIndex = m_Engine->getBindingIndex(m_OutputBlob->name);
+        const int inputIndex = m_Engine->getBindingIndex(m_InputBlob->name.c_str());
+        const int outputIndex = m_Engine->getBindingIndex(m_OutputBlob->name.c_str());
         buffers[inputIndex] = m_InputBlob->dataGpu;
         buffers[outputIndex] = m_OutputBlob->dataGpu;
 
