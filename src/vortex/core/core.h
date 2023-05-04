@@ -2,6 +2,7 @@
 
 #include <cuda_runtime.h>
 #include <iostream>
+#include <map>
 
 #include <opencv2/core/core.hpp>
 #include "cuda_utils.h"
@@ -122,38 +123,29 @@ namespace vortex
 
     };
 
-    template<typename T>
-    struct Blob
+    // TODO: provide more functionalities.
+    class DeviceMemory
     {
-        T* dataCpu;
-        T* dataGpu;
-        T* data;
-        uint32_t size;
-
-        Blob(uint32_t size, T* data = nullptr);
-        ~Blob();
-
-        void toCpu();
-        void toGpu();
-        void syncCpu();
-        void syncGpu();
-
-        void alloc(uint32_t size, T* source)
-        {   
-            this->size = size;
-            dataCpu = new T[size];
-            if (source != nullptr)
-                memcpy(dataCpu, source, size * sizeof(T));
-            else
-                memset(dataCpu, 0, size * sizeof(T));
-
-            checkRuntime(cudaMalloc(&dataGpu, size * sizeof(T)));
-            checkRuntime(cudaMemcpy(dataGpu, dataCpu, size * sizeof(T), cudaMemcpyHostToDevice));
-
-            data = dataCpu;
+    private:
+        float* m_Data;
+        uint32_t m_Size;
+        
+    public:
+        DeviceMemory(uint32_t size)
+            : m_Size(size)
+        {
+            checkRuntime(cudaMalloc(&m_Data, size * sizeof(float)));
         }
 
-    };
+        ~DeviceMemory()
+        {
+            checkRuntime(cudaFree(m_Data));
+        }
 
-    std::map<std::string, Weights> loadWeights(const std::string& filpath);
+        float* Ptr() const { return m_Data; }
+        float* Data() const { return m_Data; }
+        uint32_t Size() const { return m_Size; }
+    };
+    
+    std::map<std::string, nvinfer1::Weights> loadWeights(const std::string& filpath);
 }

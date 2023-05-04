@@ -42,17 +42,21 @@ endif(WIN32)
 include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(${PROJECT_SOURCE_DIR})
 include_directories(${PROJECT_SOURCE_DIR}/../../src/)
+FILE(GLOB_RECURSE CUDA_SOURCES ${PROJECT_SOURCE_DIR}/../../src/vortex/*.cu)
+FILE(GLOB_RECURSE CPP_SOURCES ${PROJECT_SOURCE_DIR}/../../src/vortex/*.cpp)
 # project link directory
 link_directories(${OpenCV_LIBRARY_DIRS})
 
 
-cuda_add_executable(trt-arcface 
-    arcface.cpp
+cuda_add_executable(trt-alexnet 
+    alexnet.cpp
     main.cpp
+    ${CUDA_SOURCES}
+    ${CPP_SOURCES}
 )
 
 target_link_libraries(
-	trt-arcface
+	trt-alexnet
 	nvinfer
 	cudart
 	${OpenCV_LIBS}

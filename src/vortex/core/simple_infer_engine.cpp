@@ -1,6 +1,8 @@
 #include "simple_infer_engine.h"
 #include <fstream>
 #include <vector>
+#include "vortex/core/cuda_utils.h"
+#include "vortex/utils/fileops.h"
 
 
 namespace vortex
@@ -15,11 +17,12 @@ namespace vortex
             m_Runtime->destroy();
     }
 
-    bool SimpleInferEngine::LoadEngine(const std::string& engine_path)
+    bool SimpleInferEngine::LoadEngine(const std::string& engine_path, 
+        const BlobInfo& input_info, const BlobInfo& output_info)
     {
         // load data from file
         std::vector<unsigned char> engine_data;
-        bool ret = LoadFile(model_path, engine_data);
+        bool ret = loadBinaryContent(engine_path, engine_data);
         if (!ret)
             return false;
         // create engine
@@ -35,24 +38,55 @@ namespace vortex
         
         // create cuda stream
         checkRuntime(cudaStreamCreate(&m_Stream));
+
+        m_InputInfo = input_info;
+        m_OutputInfo = output_info;
+        m_InputBlob = std::make_shared(input_info);
+        m_OutputBlob = std::make_shared(output_info);
+
         return true;
     }
 
-    bool SimpleInferEngine::LoadEngineData(const std::string& file_path, std::vector<unsigned char>& data)
+    void SimpleInferEngine::Infer(cv::Mat& image, std::vector<float>& output)
     {
-        std::ifstream file(file_path, std::ios::binary);
-        if (file.good())
-        {
-            file.seekg(0, file.end);
-            size_t file_size = file.tellg();
-            file.seekg(0, file.beg);
-            data.resize(file_size);
-            char* ptr = reinterpret_cast<char*>(data.data());
-            file.read(ptr, file_size);
-            file.close();
-            return true;
-        }
-        return false;
+        this->Preprocess(image);
+
+        // set buffer data
+        void* buffers[2] = { nullptr };
+        const int inputIndex = m_Engine->getBindingIndex(m_InputBlob->name);
+        const int outputIndex = m_Engine->getBindingIndex(m_OutputBlob->name);
+        buffers[inputIndex] = m_InputBlob->dataGpu;
+        buffers[outputIndex] = m_OutputBlob->dataGpu;
+
+        m_InputBlob->ToGpuAsync(m_Stream);
+        m_Context->enqueue(1, buffers, m_Stream, nullptr);
+        output.resize(m_OutputBlob->count);
+        m_OutputBlob->ToCpuAsync(m_Stream, output.data());
+        cudaStreamSynchronize(m_Stream);
     }
 
+    void SimpleInferEngine::Preprocess(cv::Mat& image)
+    {
+        // default preprocessing
+        // resize, bgr2rgb, normalize
+        cv::Mat temp;
+        uint32_t width = m_InputInfo.width;
+        uint32_t height = m_InputInfo.height;
+        uint32_t channels = m_InputInfo.channels;
+        cv::resize(image, temp, cv::Size(width, height));
+        uint32_t image_area = width * height;
+        uint32_t numel = image_area * channels;
+        
+        float* input_buffer = m_InputBlob->dataCpu;
+        float* pBlue = input_buffer;
+        float* pGreen = input_buffer + image_area;
+        float* pRed = input_buffer + image_area * 2;
+        unsigned char* pImage = temp.data;
+        for (uint32_t i = 0; i < image_area; ++i)
+        {
+            pRed[i] = (pImage[3 * i + 0] / 255.0 - 0.5) / 0.5;
+            pGreen[i] = (pImage[3 * i + 1] / 255.0 - 0.5) / 0.5;
+            pBlue[i] = (pImage[3 * i + 2] / 255.0 - 0.5) / 0.5;
+        }
+    }
 }

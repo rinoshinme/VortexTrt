@@ -26,11 +26,13 @@ class Demo(object):
         image = np.transpose(image, (2, 0, 1))
         image = torch.from_numpy(image).unsqueeze(0).float()
         image.div_(255).sub_(0.5).div_(0.5)
+        if torch.cuda.is_available():
+            image = image.cuda()
 
         # extract feature
         with torch.no_grad():
             feat = self.net(image)
-            feat = feat.numpy()[0]
+            feat = feat.cpu().numpy()[0]
         
         if normalize:
             # do normalization
@@ -42,6 +44,8 @@ class Demo(object):
         dummy_inputs = torch.randn(1, 3, 112, 112)
         input_names = ['input']
         output_names = ['output']
+        if torch.cuda.is_available():
+            dummy_inputs = dummy_inputs.cuda()
         torch.onnx.export(
             self.net, 
             dummy_inputs, 
@@ -60,7 +64,7 @@ if __name__ == '__main__':
         demo.to_onnx(onnx_path)
 
     # run inference
-    image_path = '../../sample/sample1.jpg'
+    image_path = '../../data/sample1.jpg'
     feat = demo.extract(image_path, normalize=False)
     print(feat[:10])
     """

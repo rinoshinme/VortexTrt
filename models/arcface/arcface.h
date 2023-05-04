@@ -3,7 +3,6 @@
 #include <vector>
 #include <string>
 #include <opencv2/core/core.hpp>
-
 #include "vortex/core/logger.h"
 
 
@@ -16,6 +15,7 @@ namespace vortex
         nvinfer1::ICudaEngine* m_Engine;
         nvinfer1::IExecutionContext* m_Context;
         nvinfer1::IRuntime* m_Runtime;
+        cudaStream_t m_Stream;  // cuda stream for synchronization.
 
         std::string m_InputBlobName;
         std::string m_OutputBlobName;
@@ -28,9 +28,7 @@ namespace vortex
         
         float* m_InputBufferDevice;
         float* m_OutputBufferDevice;
-
-        cudaStream_t m_Stream;  // cuda stream for synchronization.
-
+        
     public:
         Arcface(const std::string& model_path);
         ~Arcface();

@@ -1,4 +1,6 @@
 #include "core.h"
+#include <fstream>
+using namespace nvinfer1;
 
 namespace vortex
 {
@@ -8,7 +10,7 @@ namespace vortex
         return os;
     }
 
-    std::map<std::string, Weights> loadWeights(const std::string& filpath)
+    std::map<std::string, nvinfer1::Weights> loadWeights(const std::string& filepath)
     {
         std::cout << "Loading weights from " << filepath << std::endl;
 
@@ -24,7 +26,7 @@ namespace vortex
 
         while (count--)
         {
-            Weights wt{DataType::kFloat, nullptr, 0};
+            nvinfer1::Weights wt{DataType::kFLOAT, nullptr, 0};
             uint32_t size;
             // read name and size of blob
             std::string name;

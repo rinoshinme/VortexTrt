@@ -6,23 +6,13 @@ cuda and tensorrt utility functions
 #include <cuda_runtime.h>
 
 
+bool __check_cuda_runtime(cudaError_t code, const char* op, const char* file, int line);
 
-namespace vortex
-{
-#define checkRuntime(op) __check_cuda_runtime((op), #op, __FILE__, __LINE__)
+#ifndef checkRuntime
+#define checkRuntime(op) vortex::__check_cuda_runtime((op), #op, __FILE__, __LINE__)
+#endif
 
-    bool __check_cuda_runtime(cudaError_t code, const char* op, const char* file, int line)
-    {
-        if (code != cudaSuccess)
-        {
-            const char* err_name = cudaGetErrorName(code);
-            const char* err_message = cudaGetErrorString(code);
-            printf("runtime error: %s:%d %s failed.\n code = %s, message = %s\n", file, line, op, err_name, err_message);
-            return false;
-        }
-        return true;
-    }
-
+#ifndef CHECK
 #define CHECK(status) \
     do\
     {\
@@ -33,4 +23,4 @@ namespace vortex
             abort();\
         }\
     } while (0)
-}
+#endif

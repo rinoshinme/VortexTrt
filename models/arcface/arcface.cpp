@@ -1,7 +1,7 @@
 #include "arcface.h"
 #include <fstream>
 #include <iostream>
-#include "core/cuda_utils.h"
+#include "vortex/core/cuda_utils.h"
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 

@@ -1,6 +1,11 @@
 # VortexTRT
-主要支持转onnx以及onnx模型转tensorrt  
-暂不支持从零构建tensorrt引擎
+支持torch转onnx
+支持onnx转tensorrt
+支持tensorrt引擎推理
+暂不支持int8量化  
+不支持从零构建tensorrt引擎
+不支持动态尺寸
+不支持batching
 
 
 ##  支持模型
