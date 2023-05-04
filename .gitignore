@@ -1,0 +1,17 @@
+.vscode/
+.vs/
+__pycache__/
+
+# tmp
+bk/
+
+# model weights
+*.pth
+*.onnx
+*.wts
+
+# media files
+*.jpg
+*.png
+*.bmp
+*.wav
