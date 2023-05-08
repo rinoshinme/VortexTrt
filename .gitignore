@@ -6,6 +6,9 @@ __pycache__/
 bk/
 
 # model weights
+weights/
+checkpoints/
+checkpoint/
 *.pth
 *.onnx
 *.wts

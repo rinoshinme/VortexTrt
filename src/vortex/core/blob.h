@@ -73,4 +73,6 @@ namespace vortex
     };
 
     typedef Blob<float> BlobF;
+    typedef Blob<uint8_t> BlobI;
+    
 }

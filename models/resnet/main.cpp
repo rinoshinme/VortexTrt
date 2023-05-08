@@ -1,7 +1,7 @@
 #include <iostream>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
-#include "vortex/core/simple_infer_engine.h"
+#include "vortex/engine/simple_infer_engine.h"
 
 namespace vortex
 {

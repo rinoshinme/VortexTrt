@@ -1,6 +1,7 @@
 /*
-    normaly, onnx models can be converted to engine files with trtexec when all 
+    normaly, onnx models can be built into engine files with trtexec when all 
     ops are supported.
+
 */
 #pragma once
 #include <cstdint>
@@ -24,6 +25,7 @@ namespace vortex
     public:
         EngineBuilder(const BuildOptions& options);
 
-        bool Build(const std::string& engine_path);
+        bool Build(const std::string& model_path, const std::string& engine_path);
+        
     };
 }

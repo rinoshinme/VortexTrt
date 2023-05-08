@@ -1,7 +1,6 @@
 #pragma once
 
 #include <opencv2/core/core.hpp>
-#include "affine.h"
 
 
 namespace vortex
@@ -21,5 +20,5 @@ namespace vortex
         void operator()(std::vector<cv::Mat>& images);
     };
 
-    cv::Mat letterBox(cv::Mat& image, int target_width, int target_height);
+    
 }

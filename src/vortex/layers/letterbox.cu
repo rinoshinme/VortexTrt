@@ -1,7 +1,10 @@
-#include "image_proc.h"
-#include "vortex/core/core.h"
+#include "letterbox.h"
 #include <cstdio>
 #include <opencv2/highgui/highgui.hpp>
+#include "vortex/core/core.h"
+#include "affine.h"
+#include "vortex/core/image.h"
+#include "vortex/core/cuda_utils.h"
 
 namespace vortex
 {

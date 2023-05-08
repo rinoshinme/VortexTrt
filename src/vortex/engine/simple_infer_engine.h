@@ -5,8 +5,9 @@
 #include <vector>
 #include <opencv2/core/core.hpp>
 #include "NvInfer.h"
-#include "logger.h"
-#include "blob.h"
+
+#include "vortex/core/logger.h"
+#include "vortex/core/blob.h"
 
 
 namespace vortex
@@ -35,10 +36,9 @@ namespace vortex
             const BlobInfo& input_info, 
             const BlobInfo& output_info);
 
+        // output fed into the buffer, postprocessing not provided
         virtual void Infer(cv::Mat& image, std::vector<float>& output);
 
         virtual void Preprocess(cv::Mat& image);
     };
-
-    // std::shared_ptr<SimpleInferEngine> MakeInferEngine();
 }

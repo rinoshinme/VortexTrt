@@ -100,4 +100,8 @@ if __name__ == '__main__':
     demo = UNetInfer('./weights/unet_carvana_scale0.5_epoch2.pth')
     image_path = '../../sample/29bb3ece3180_11.jpg'
     mask = demo.infer(image_path)
-    # demo.to_onnx("./unet.onnx")
+    print(mask.shape)
+
+    onnx_path = './unet.onnx'
+    if not os.path.exists(onnx_path):
+        demo.to_onnx(onnx_path)
