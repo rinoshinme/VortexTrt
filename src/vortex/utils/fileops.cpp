@@ -21,6 +21,35 @@ namespace vortex
         return false;
     }
 
+    void saveFloats(const std::string& file_path, const std::vector<float>& data)
+    {
+        FILE* fp = nullptr;
+        fp = fopen(file_path.c_str(), "r");
+        if (fp == nullptr)
+            return;
+        
+        for (size_t i = 0; i < data; ++i)
+        {
+            fprintf(fp, "%g\n", data[i]);
+        }
+        fclose(fp);
+    }
+
+    void loadFloats(const std::string& file_path, std::vector<float>& data)
+    {
+        std::ifstream file(file_path);
+        if (!file.is_open())
+            return;
+        std::string line;
+        while (true)
+        {
+            line = std::getline(file);
+            if (line.empty()) break;
+            float v = std::atof(line.c_str());
+            data.push_back(v);
+        }
+    }
+
     std::map<std::string, nvinfer1::Weights> loadWeights(const std::string& filepath)
     {
         std::cout << "Loading weights from " << filepath << std::endl;

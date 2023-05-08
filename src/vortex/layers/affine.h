@@ -37,5 +37,4 @@ namespace vortex
     };
 
     std::ostream& operator<<(std::ostream& os, const AffineMatrix& mat);
-
 }

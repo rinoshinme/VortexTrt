@@ -1,6 +1,7 @@
 #include "letterbox.h"
 #include <cstdio>
 #include <opencv2/highgui/highgui.hpp>
+
 #include "vortex/core/core.h"
 #include "affine.h"
 #include "vortex/core/image.h"

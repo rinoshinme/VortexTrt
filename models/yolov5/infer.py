@@ -52,11 +52,13 @@ class YOLOV5():
         img /= 255.0
         img = np.expand_dims(img,axis=0)
         print(img.shape)
-        
-        for c in range(3):
-            for x in range(640):
-                for y in range(640):
 
+        # fp = open('input.txt', 'w')
+        # for c in range(3):
+        #     for x in range(640):
+        #         for y in range(640):
+        #             fp.write('{}\n'.format(img[0, c, x, y]))
+        # fp.close()
 
         input_feed = self.get_input_feed(img)
         outputs = self.onnx_session.run(None, input_feed)
