@@ -1,7 +1,6 @@
 #include <iostream>
 #include <string>
 #include <opencv2/highgui/highgui.hpp>
-
 #include "vortex/layers/image_proc.h"
 
 

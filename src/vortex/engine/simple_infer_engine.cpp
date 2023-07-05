@@ -24,8 +24,7 @@ namespace vortex
         // load data from file
         std::vector<unsigned char> engine_data;
         bool ret = loadBinaryContent(engine_path, engine_data);
-        if (!ret)
-            return false;
+        if (!ret) return false;
         // create engine
         m_Runtime = nvinfer1::createInferRuntime(m_Logger);
         if (m_Runtime == nullptr)
@@ -40,6 +39,7 @@ namespace vortex
         // create cuda stream
         checkRuntime(cudaStreamCreate(&m_Stream));
 
+        // create infer blobs
         m_InputInfo = input_info;
         m_OutputInfo = output_info;
         m_InputBlob = std::make_shared<BlobF>(input_info);

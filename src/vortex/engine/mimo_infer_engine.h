@@ -14,9 +14,12 @@
 
 namespace vortex
 {
+    /*
+     * infer engine for multiple io models.
+     */
     class MimoInferEngine
     {
-    private:
+    protected:
         Logger m_Logger;
 
         nvinfer1::ICudaEngine* m_Engine = nullptr;
@@ -33,7 +36,7 @@ namespace vortex
         MimoInferEngine() {}
         ~MimoInferEngine();
 
-        void LoadEngine(const std::string& engine_path,
+        bool LoadEngine(const std::string& engine_path,
             const std::vector<BlobInfo>& input_info, 
             const std::vector<BlobInfo>& output_info);
         

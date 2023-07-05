@@ -9,6 +9,7 @@ namespace vortex
     struct BlobInfo
     {
         std::string name;
+        // uint32_t batch;
         uint32_t width;
         uint32_t height;
         uint32_t channels;
@@ -69,6 +70,16 @@ namespace vortex
             if (target == nullptr)
                 target = dataCpu;
             checkRuntime(cudaMemcpyAsync(target, dataGpu, count * sizeof(T), cudaMemcpyDeviceToHost, stream));
+        }
+
+        void CopyFrom(T* data)
+        {
+            memcpy(dataCpu, data, count * sizeof(T));
+        }
+
+        void CopyTo(T* data)
+        {
+            memcpy(data, dataCpu, count * sizeof(T));
         }
     };
 

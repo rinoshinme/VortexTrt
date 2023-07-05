@@ -3,9 +3,9 @@
 #include <opencv2/highgui/highgui.hpp>
 
 #include "vortex/core/core.h"
-#include "affine.h"
 #include "vortex/core/image.h"
 #include "vortex/core/cuda_utils.h"
+#include "affine.h"
 
 namespace vortex
 {

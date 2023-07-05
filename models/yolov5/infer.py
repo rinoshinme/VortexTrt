@@ -90,13 +90,13 @@ def nms(dets, thresh):
         #	1.相交
         #	2.不相交
         #-------------------------------------------------------
-        x11 = np.maximum(x1[i], x1[index[1:]]) 
+        x11 = np.maximum(x1[i], x1[index[1:]])
         y11 = np.maximum(y1[i], y1[index[1:]])
         x22 = np.minimum(x2[i], x2[index[1:]])
         y22 = np.minimum(y2[i], y2[index[1:]])
 
-        w = np.maximum(0, x22 - x11 + 1)                              
-        h = np.maximum(0, y22 - y11 + 1) 
+        w = np.maximum(0, x22 - x11 + 1)
+        h = np.maximum(0, y22 - y11 + 1)
 
         overlaps = w * h
         #-------------------------------------------------------

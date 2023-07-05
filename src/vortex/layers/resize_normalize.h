@@ -25,6 +25,5 @@ namespace vortex
 
         void Forward(cv::Mat& image, std::vector<float>& output);
     };
-
     
 }

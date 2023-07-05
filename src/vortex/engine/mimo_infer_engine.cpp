@@ -1,5 +1,5 @@
 #include "mimo_infer_engine.h"
-
+#include "vortex/utils/fileops.h"
 
 namespace vortex
 {
@@ -8,11 +8,36 @@ namespace vortex
 
     }
 
-    void MimoInferEngine::LoadEngine(const std::string& engine_path, 
+    bool MimoInferEngine::LoadEngine(const std::string& engine_path, 
         const std::vector<BlobInfo>& input_info, 
         const std::vector<BlobInfo>& output_info)
     {
+        // load data from file
+        std::vector<unsigned char> engine_data;
+        bool ret = loadBinaryContent(engine_path, engine_data);
+        if (!ret) return false;
 
+        // create engine
+        m_Runtime = nvinfer1::createInferRuntime(m_Logger);
+        if (m_Runtime == nullptr)
+            return false;
+        m_Engine = m_Runtime->deserializeCudaEngine(engine_data.data(), engine_data.size());
+        if (m_Engine == nullptr)
+            return false;
+        m_Context = m_Engine->createExecutionContext();
+        if (m_Context == nullptr)
+            return false;
+        
+        // create cuda stream
+        checkRuntime(cudaStreamCreate(&m_Stream));
+
+        // create infer blobs
+        m_InputInfo = input_info;
+        m_OutputInfo = output_info;
+        for (auto& info : input_info)
+            m_InputBlobs.push_back(std::make_shared<BlobF>(info));
+        for (auto& info : output_info)
+            m_OutputBlobs.push_back(std::make_shared<BlobF>(info));
     }
 
     void MimoInferEngine::InternalInfer()
@@ -25,6 +50,7 @@ namespace vortex
         std::vector<float*> array_buffer;
         array_buffer.resize(n_ios);
 
+        // feed inputs
         for (size_t i = 0; i < n_inputs; ++i)
         {
             const int input_index = m_Engine->getBindingIndex(m_InputBlobs[i]->name.c_str());
@@ -32,6 +58,7 @@ namespace vortex
             array_buffer[input_index] = m_InputBlobs[i]->dataGpu;
             m_InputBlobs[i]->ToGpuAsync(m_Stream);
         }
+
         for (size_t i = 0; i < n_outputs; ++i)
         {
             const int output_index = m_Engine->getBindingIndex(m_OutputBlobs[i]->name.c_str());
@@ -39,13 +66,9 @@ namespace vortex
             array_buffer[output_index] = m_OutputBlobs[i]->dataGpu;
         }
 
-#if 0
+        // collect output
         m_Context->enqueue(1, (void*)array_buffer.data(), m_Stream, nullptr);
-        // output to where?
-        
         m_OutputBlob->ToCpuAsync(m_Stream, output.data());
         cudaStreamSynchronize(m_Stream);
-#endif
-
     }
 }
