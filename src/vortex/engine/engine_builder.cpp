@@ -3,7 +3,7 @@
 
 namespace vortex
 {
-    EngineBuilder::EngineBuilder(const BuildOptions options)
+    EngineBuilder::EngineBuilder(const BuildOptions& options)
     {
         m_Options = options;
         m_Engine = nullptr;

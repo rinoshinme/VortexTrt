@@ -38,6 +38,7 @@ namespace vortex
             m_InputBlobs.push_back(std::make_shared<BlobF>(info));
         for (auto& info : output_info)
             m_OutputBlobs.push_back(std::make_shared<BlobF>(info));
+        return true;
     }
 
     void MimoInferEngine::InternalInfer()
@@ -57,6 +58,14 @@ namespace vortex
             if (input_index >= n_ios) continue;
             array_buffer[input_index] = m_InputBlobs[i]->dataGpu;
             m_InputBlobs[i]->ToGpuAsync(m_Stream);
+            // set binding dimension
+            nvinfer1::Dims dims;
+            dims.d[0] = 1;
+            dims.d[1] = m_InputInfo[i].channels;
+            dims.d[2] = m_InputInfo[i].height,
+            dims.d[3] = m_InputInfo[i].width;
+            dims.nbDims = 4;
+            m_Context->setBindingDimensions(input_index, dims);
         }
 
         for (size_t i = 0; i < n_outputs; ++i)
@@ -67,8 +76,11 @@ namespace vortex
         }
 
         // collect output
-        m_Context->enqueue(1, (void*)array_buffer.data(), m_Stream, nullptr);
-        m_OutputBlob->ToCpuAsync(m_Stream, output.data());
+        m_Context->enqueue(1, (void**)array_buffer.data(), m_Stream, nullptr);
+        for (size_t i = 0; i < n_outputs; ++i)
+        {
+            m_OutputBlobs[i]->ToCpuAsync(m_Stream);
+        }
         cudaStreamSynchronize(m_Stream);
     }
 }

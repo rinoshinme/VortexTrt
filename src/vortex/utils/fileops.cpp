@@ -24,11 +24,11 @@ namespace vortex
     void saveFloats(const std::string& file_path, const std::vector<float>& data)
     {
         FILE* fp = nullptr;
-        fp = fopen(file_path.c_str(), "r");
+        fp = fopen(file_path.c_str(), "w");
         if (fp == nullptr)
             return;
         
-        for (size_t i = 0; i < data; ++i)
+        for (size_t i = 0; i < data.size(); ++i)
         {
             fprintf(fp, "%g\n", data[i]);
         }
@@ -37,17 +37,17 @@ namespace vortex
 
     void loadFloats(const std::string& file_path, std::vector<float>& data)
     {
-        std::ifstream file(file_path);
+        std::ifstream file(file_path, std::ios::in);
         if (!file.is_open())
             return;
         std::string line;
-        while (true)
+        while (std::getline(file, line);)
         {
-            line = std::getline(file);
             if (line.empty()) break;
             float v = std::atof(line.c_str());
             data.push_back(v);
         }
+        file.close();
     }
 
     std::map<std::string, nvinfer1::Weights> loadWeights(const std::string& filepath)

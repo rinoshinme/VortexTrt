@@ -12,6 +12,7 @@ checkpoint/
 *.pth
 *.onnx
 *.wts
+*.txt
 
 # media files
 *.jpg

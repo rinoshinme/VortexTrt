@@ -48,14 +48,14 @@ public:
         const std::string feature_text("./feature.txt");
         saveFloats(feature_text, feature_data);
     }
-}
+};
 
 
 int main()
 {
-    const std::string engine_path("mimo.engine");
+    const std::string engine_path("../mimo.engine");
     MimoSample sample(engine_path);
-    sample.Forward()
+    sample.Forward();
 
     return 0;
 }

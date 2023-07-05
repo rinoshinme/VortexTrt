@@ -47,7 +47,7 @@ FILE(GLOB_RECURSE CPP_SOURCES ${PROJECT_SOURCE_DIR}/../../src/vortex/*.cpp)
 link_directories(${OpenCV_LIBRARY_DIRS})
 
 
-cuda_add_executable(trt-alexnet 
+cuda_add_executable(trt-mimo 
     main.cpp
     ${CUDA_SOURCES}
     ${CPP_SOURCES}

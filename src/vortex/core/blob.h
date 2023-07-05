@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <memory.h>
 #include <cuda_runtime.h>
 #include "cuda_utils.h"
 #include "NvInfer.h"
