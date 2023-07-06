@@ -20,6 +20,14 @@ CLASSES = ['person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train',
            'hair drier', 'toothbrush'] #coco80类别
 
 
+def save_data(data, filepath):
+    data = data.reshape(-1)
+    size = data.shape[0]
+    with open(filepath, 'w') as f:
+        for i in range(size):
+            f.write('{}\n'.format(data[i]))
+
+
 class YOLOV5():
     def __init__(self, onnxpath):
         self.onnx_session = onnxruntime.InferenceSession(onnxpath)
@@ -51,18 +59,18 @@ class YOLOV5():
         img = img.astype(dtype=np.float32)
         img /= 255.0
         img = np.expand_dims(img,axis=0)
+
+        # input_feed = self.get_input_feed(img)
+        # outputs = self.onnx_session.run(None, input_feed)
+
         print(img.shape)
-
-        # fp = open('input.txt', 'w')
-        # for c in range(3):
-        #     for x in range(640):
-        #         for y in range(640):
-        #             fp.write('{}\n'.format(img[0, c, x, y]))
-        # fp.close()
-
-        input_feed = self.get_input_feed(img)
-        outputs = self.onnx_session.run(None, input_feed)
+        outputs = self.onnx_session.run(['output'], {'images': img})
         pred = outputs[0]
+        print(pred.shape)
+
+        save_data(img, 'images.txt')
+        save_data(pred, 'output.txt')
+
         return pred, or_img
 
 
@@ -128,6 +136,8 @@ def filter_box(org_box, conf_thres, iou_thres): #过滤掉无用的框
     conf = org_box[..., 4] > conf_thres
     box = org_box[conf == True]
 
+    print(box.shape)
+
     #-------------------------------------------------------
     #	通过argmax获取置信度最大的类别
 	#-------------------------------------------------------
@@ -177,7 +187,7 @@ def draw(image,box_data):
 
 
 if __name__=="__main__":
-    onnx_path = 'yolov5m.onnx'
+    onnx_path = 'yolov5s.onnx'
     model = YOLOV5(onnx_path)
     image_path = '../../data/bus.jpg'
     output,or_img=model.inference(image_path)

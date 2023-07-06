@@ -15,7 +15,7 @@
 namespace vortex
 {
     /*
-     * infer engine for multiple io models.
+     * infer engine for (possible) multiple io models.
      */
     class MimoInferEngine
     {

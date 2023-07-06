@@ -8,40 +8,51 @@
 #include "vortex/core/logger.h"
 #include "vortex/core/blob.h"
 #include "vortex/layers/yolo_decode.h"
+#include "vortex/engine/siso_infer_engine.h"
 
 
 namespace vortex
 {
     // TODO: 
-    // 1. integrate into MimoInferEngine
+    // 1. integrate into SisoInferEngine
     // 2. CUDA accelerated preprocessing and postprocessing.
-    class Yolov5
+    struct DetBox
+    {
+        float xmin;
+        float ymin;
+        float xmax;
+        float ymax;
+        float score;
+
+        uint32_t class_index;
+
+        float Area() const { return (xmax - xmin) * (ymax - ymin); }
+    };
+
+    float BoxOverlap(DetBox& b1, DetBox& b2);
+
+    void sortBoxesByScore(std::vector<DetBox>& boxes);
+
+    class Yolov5 : public SisoInferEngine
     {
     private:
-        Logger m_Logger;
-
-        nvinfer1::ICudaEngine* m_Engine = nullptr;
-        nvinfer1::IExecutionContext* m_Context = nullptr;
-        nvinfer1::IRuntime* m_Runtime = nullptr;
-        cudaStream_t m_Stream;
-
-        // input&output parameters
-        BlobInfo m_InputInfo;
-        BlobInfo m_OutputInfo;
-        std::shared_ptr<BlobF> m_InputBlob;
-        std::shared_ptr<BlobF> m_OutputBlob;
-
+        float m_ConfThresh;
+        float m_IouThresh;
         std::shared_ptr<YoloDecoder> m_Decoder;
 
     public:
-        Yolov5(const std::string& engine_path);
-        ~Yolov5();
+        Yolov5(const std::string& engine_path, float conf_thresh = 0.5, float iou_thresh = 0.5);
+        ~Yolov5() {}
 
-        void Detect(cv::Mat& image, std::vector<YoloBox>& boxes);
+        void Detect(cv::Mat& image, std::vector<DetBox>& boxes);
+
+        // sample infer
+        void Infer(const std::vector<float>& inputs, std::vector<float>& outputs);
 
     private:
         void Preprocess(cv::Mat& image);
-        bool LoadEngine(const std::string& engine_path, 
-            const BlobInfo& input_info, const BlobInfo& output_info);
+        void Postprocess(std::vector<DetBox>& boxes);
+        std::vector<uint32_t> Nms(std::vector<DetBox>& boxes);
+
     };
 }

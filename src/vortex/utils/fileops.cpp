@@ -41,7 +41,7 @@ namespace vortex
         if (!file.is_open())
             return;
         std::string line;
-        while (std::getline(file, line);)
+        while (std::getline(file, line))
         {
             if (line.empty()) break;
             float v = std::atof(line.c_str());

@@ -3,12 +3,36 @@
 #include <set>
 #include <opencv2/imgproc/imgproc.hpp>
 #include "vortex/utils/fileops.h"
+#include "vortex/utils/arrayops.h"
 
 
 namespace vortex
 {
-    Yolov5::Yolov5(const std::string& engine_path)
+    void sortBoxesByScore(std::vector<DetBox>& boxes)
     {
+        std::sort(boxes.begin(), boxes.end(), 
+            [](DetBox& b1, DetBox& b2) {
+                return b1.score < b2.score;
+            }
+        );
+    }
+
+    float BoxOverlap(DetBox& b1, DetBox& b2)
+    {
+        float xmin = std::max(b1.xmin, b2.xmin);
+        float xmax = std::min(b1.xmax, b2.xmax);
+        float ymin = std::max(b1.ymin, b2.ymin);
+        float ymax = std::min(b1.ymax, b2.ymax);
+
+        float i = std::max(xmax - xmin, 0.0f) * std::max(ymax - ymin, 0.0f);
+        float u = b1.Area() + b2.Area() - i;
+		return i / u;
+    }
+
+    Yolov5::Yolov5(const std::string& engine_path, float conf_thresh, float iou_thresh)
+        : m_ConfThresh(conf_thresh), m_IouThresh(iou_thresh)
+    {
+        // assume single image inference.
         BlobInfo input_info = {
             "images", 640, 640, 3
         };
@@ -20,91 +44,104 @@ namespace vortex
         m_Decoder = std::make_shared<YoloDecoder>(0.5, 0.5, 80);
     }
 
-    Yolov5::~Yolov5()
-    {
-        if (m_Context != nullptr)
-            m_Context->destroy();
-        if (m_Engine != nullptr)
-            m_Engine->destroy();
-        if (m_Runtime != nullptr)
-            m_Runtime->destroy();
-    }
-
-    void Yolov5::Detect(cv::Mat& image, std::vector<YoloBox>& boxes)
-    {
-        this->Preprocess(image);
-
-        // set buffer data
-        void* buffers[2] = { nullptr };
-        const int inputIndex = m_Engine->getBindingIndex(m_InputBlob->name.c_str());
-        const int outputIndex = m_Engine->getBindingIndex(m_OutputBlob->name.c_str());
-        buffers[inputIndex] = m_InputBlob->dataGpu;
-        buffers[outputIndex] = m_OutputBlob->dataGpu;
-
-        m_InputBlob->ToGpuAsync(m_Stream);
-        m_Context->enqueue(1, buffers, m_Stream, nullptr);
-        std::vector<float> output;
-        output.resize(m_OutputBlob->count);
-        m_OutputBlob->ToCpuAsync(m_Stream, output.data());
-        cudaStreamSynchronize(m_Stream);
-
-        // parse output info
-        int width = image.cols;
-        int height = image.rows;
-        boxes = m_Decoder->DecodeCpu(output, width, height);
-    }
-
     void Yolov5::Preprocess(cv::Mat& image)
     {
-        // simple resize
-        // TODO: letterbox
-        uint32_t width = m_InputInfo.width;
-        uint32_t height = m_InputInfo.height;
+        // preprocess image, feed into m_InputBlob
         cv::Mat temp;
-        cv::resize(image, temp, cv::Size(width, height));
-
-        uint32_t image_area = width * height;
+        cv::resize(image, temp, cv::Size(640, 640));
         
-        float* input_buffer = m_InputBlob->dataCpu;
-        float* pBlue = input_buffer;
-        float* pGreen = input_buffer + image_area;
-        float* pRed = input_buffer + image_area * 2;
+        uint32_t height = 640;
+        uint32_t width = 640;
+        uint32_t image_area = width * height;
+        float* red_plane = m_InputBlob->dataCpu;
+        float* green_plane = m_InputBlob->dataCpu + image_area;
+        float* blue_plane = m_InputBlob->dataCpu + image_area * 2;
 
-        unsigned char* pImage = temp.data;
-        for (uint32_t i = 0; i < image_area; ++i)
+        for (uint32_t y = 0; y < height; ++y)
         {
-            pRed[i] = pImage[3 * i + 0] / 255.0;
-            pGreen[i] = pImage[3 * i + 1] / 255.0;
-            pBlue[i] = pImage[3 * i + 2] / 255.0;
+            unsigned char* line = temp.ptr<unsigned char>(y);
+            for (uint32_t x = 0; x < width; ++x)
+            {
+                unsigned char red = line[x * 3 + 2];
+                unsigned char green = line[x * 3 + 1];
+                unsigned char blue = line[x * 3];
+                uint32_t index = y * width + x;
+                red_plane[index] = red / 255.0;
+                green_plane[index] = green / 255.0;
+                blue_plane[index] = blue / 255.0;
+            }
         }
     }
 
-    bool Yolov5::LoadEngine(const std::string& engine_path, 
-        const BlobInfo& input_info, const BlobInfo& output_info)
+    void Yolov5::Postprocess(std::vector<DetBox>& results)
     {
-        // load engine data
-        std::vector<unsigned char> engine_data;
-        bool ret = loadBinaryContent(engine_path, engine_data);
-        if (!ret)
-            return false;
-        // create engine
-        m_Runtime = nvinfer1::createInferRuntime(m_Logger);
-        if (m_Runtime == nullptr)
-            return false;
-        m_Engine = m_Runtime->deserializeCudaEngine(engine_data.data(), engine_data.size());
-        if (m_Engine == nullptr)
-            return false;
-        m_Context = m_Engine->createExecutionContext();
-        if (m_Context == nullptr)
-            return false;
-        
-        // create cuda stream
-        checkRuntime(cudaStreamCreate(&m_Stream));
+        uint32_t num_anchors = m_OutputInfo.width;
+        uint32_t num_elements = m_OutputInfo.height;
+        uint32_t num_classes = num_elements - 5;
 
-        m_InputInfo = input_info;
-        m_OutputInfo = output_info;
-        m_InputBlob = std::make_shared<BlobF>(input_info);
-        m_OutputBlob = std::make_shared<BlobF>(output_info);
-        return true;
+        std::vector<DetBox> boxes;
+        for (uint32_t i = 0; i < num_anchors; ++i)
+        {
+            float* anchor_data = m_OutputBlob->dataCpu + i * num_elements;
+            if (anchor_data[4] < m_ConfThresh)
+                continue;
+            
+            auto m = maxValue(anchor_data, 5, num_elements);
+            DetBox box;
+            box.xmin = anchor_data[0] - anchor_data[2] / 2;
+            box.ymin = anchor_data[1] - anchor_data[3] / 2;
+            box.xmax = anchor_data[0] + anchor_data[2] / 2;
+            box.ymax = anchor_data[1] + anchor_data[3] / 2;
+            box.score = anchor_data[4];
+            box.class_index = m.first - 5;
+            boxes.push_back(box);
+        }
+
+        // do nms
+        results.clear();
+        std::vector<uint32_t> indices = Nms(boxes);
+        for (auto k : indices)
+            results.push_back(boxes[k]);
+    }
+
+    void Yolov5::Detect(cv::Mat& image, std::vector<DetBox>& boxes)
+    {
+        Preprocess(image);
+        InternalInfer();
+        Postprocess(boxes);
+    }
+
+    void Yolov5::Infer(const std::vector<float>& inputs, std::vector<float>& outputs)
+    {
+        // copy data
+        m_InputBlob->CopyFrom(inputs.data());
+
+        this->InternalInfer();
+
+        // collect data
+        outputs.resize(m_OutputBlob->count);
+        m_OutputBlob->CopyTo(outputs.data());
+    }
+
+    std::vector<uint32_t> Yolov5::Nms(std::vector<DetBox>& boxes)
+    {
+        sortBoxesByScore(boxes);
+        std::vector<uint32_t> indices;
+        std::vector<uint32_t> living(boxes.size(), 1);
+
+        for (uint32_t pos = 0; pos < boxes.size(); ++pos)
+        {
+            if (living[pos] == 0) continue;
+            indices.push_back(pos);
+            // calculate overlap with later boxes
+            for (uint32_t k = pos + 1; k < boxes.size(); ++k)
+            {
+                float overlap = BoxOverlap(boxes[pos], boxes[k]);
+                if (overlap > m_IouThresh)
+                    living[k] = 0;
+            }
+        }
+
+        return indices;
     }
 }

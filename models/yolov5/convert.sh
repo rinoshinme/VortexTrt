@@ -3,11 +3,12 @@
 
 # convert model to onnx
 # change line of code in yolo.py
+# see https://github.com/shouxieai/tensorRT_Pro/tree/main for details.
 # '''
 #         return x if self.training else (torch.cat(z, 1), x)
 #         # return x if self.training else torch.cat(z, 1)
 # '''
-python export.py --weights yolov5s.pt --include onnx
+# python export.py --weights yolov5s.pt --include onnx
 
 # convert tensorrt
 trtexec --onnx=./yolov5s.onnx \

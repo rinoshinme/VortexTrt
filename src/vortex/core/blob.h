@@ -7,6 +7,13 @@
 
 namespace vortex
 {
+
+    enum class MemoryType
+    {
+        GPU_MEMORY = 0,
+        CPU_MEMORY,
+    };
+
     struct BlobInfo
     {
         std::string name;
@@ -14,7 +21,7 @@ namespace vortex
         uint32_t width;
         uint32_t height;
         uint32_t channels;
-        uint32_t Count() const { return width * height * channels; }
+        uint32_t Count() const { return 1 * channels * height * width; }
     };
 
     template<typename T>
@@ -73,14 +80,18 @@ namespace vortex
             checkRuntime(cudaMemcpyAsync(target, dataGpu, count * sizeof(T), cudaMemcpyDeviceToHost, stream));
         }
 
-        void CopyFrom(T* data)
+        void CopyFrom(const T* data, uint32_t size = 0)
         {
-            memcpy(dataCpu, data, count * sizeof(T));
+            if (size == 0)
+                size = count;
+            memcpy(dataCpu, data, size * sizeof(T));
         }
 
-        void CopyTo(T* data)
+        void CopyTo(T* data, uint32_t size = 0)
         {
-            memcpy(data, dataCpu, count * sizeof(T));
+            if (size == 0)
+                size = count;
+            memcpy(data, dataCpu, size * sizeof(T));
         }
     };
 
