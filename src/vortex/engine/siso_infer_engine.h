@@ -35,6 +35,7 @@ namespace vortex
         virtual bool LoadEngine(const std::string& engine_path, 
             const BlobInfo& input_info, 
             const BlobInfo& output_info);
+        // infer model with blobs
         virtual void InternalInfer(MemoryType input_type = MemoryType::CPU_MEMORY, 
             MemoryType output_type = MemoryType::CPU_MEMORY);
     };

@@ -59,7 +59,7 @@ namespace vortex
 
         // set binding dimension
         nvinfer1::Dims dims;
-        dims.d[0] = 1;
+        dims.d[0] = m_InputInfo.batch;
         dims.d[1] = m_InputInfo.channels;
         dims.d[2] = m_InputInfo.height,
         dims.d[3] = m_InputInfo.width;
@@ -68,11 +68,13 @@ namespace vortex
 
         // it's better to wrap pre/post processing here
         // for better performance.
+        
         if (input_type == MemoryType::CPU_MEMORY)
             m_InputBlob->ToGpuAsync(m_Stream);
         m_Context->enqueue(1, buffers, m_Stream, nullptr);
         if (output_type == MemoryType::CPU_MEMORY)
             m_OutputBlob->ToCpuAsync(m_Stream);
+        
         cudaStreamSynchronize(m_Stream);
     }
 }

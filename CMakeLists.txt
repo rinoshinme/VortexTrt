@@ -1,6 +1,3 @@
-"""
-build vortex-trt library
-"""
 cmake_minimum_required(VERSION 2.15)
 
 project(vortex_trt)
@@ -64,6 +61,7 @@ cuda_add_executable(app
 target_link_libraries(
 	app
 	nvinfer
+	nvonnxparser
 	cudart
 	${OpenCV_LIBS}
 )

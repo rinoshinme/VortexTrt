@@ -11,11 +11,11 @@ namespace vortex
         Unet(const std::string& engine_path)
         {
             BlobInfo input_info = {
-                "input", 512, 512, 3
+                "input", 1, 3, 512, 512
             };
 
             BlobInfo output_info = {
-                "output", 512, 512, 1
+                "output", 1, 512, 512, 1
             };
             this->LoadEngine(engine_path, input_info, output_info);
         }

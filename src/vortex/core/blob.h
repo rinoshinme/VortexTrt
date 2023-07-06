@@ -17,11 +17,11 @@ namespace vortex
     struct BlobInfo
     {
         std::string name;
-        // uint32_t batch;
-        uint32_t width;
-        uint32_t height;
+        uint32_t batch;
         uint32_t channels;
-        uint32_t Count() const { return 1 * channels * height * width; }
+        uint32_t height;
+        uint32_t width;
+        uint32_t Count() const { return batch * channels * height * width; }
     };
 
     template<typename T>
@@ -97,5 +97,4 @@ namespace vortex
 
     typedef Blob<float> BlobF;
     typedef Blob<uint8_t> BlobI;
-    
 }

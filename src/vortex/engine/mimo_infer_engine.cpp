@@ -5,7 +5,12 @@ namespace vortex
 {
     MimoInferEngine::~MimoInferEngine()
     {
-
+        if (m_Context != nullptr)
+            m_Context->destroy();
+        if (m_Engine != nullptr)
+            m_Engine->destroy();
+        if (m_Runtime != nullptr)
+            m_Runtime->destroy();
     }
 
     bool MimoInferEngine::LoadEngine(const std::string& engine_path, 
@@ -60,7 +65,7 @@ namespace vortex
             m_InputBlobs[i]->ToGpuAsync(m_Stream);
             // set binding dimension
             nvinfer1::Dims dims;
-            dims.d[0] = 1;
+            dims.d[0] = m_InputInfo[i].batch;
             dims.d[1] = m_InputInfo[i].channels;
             dims.d[2] = m_InputInfo[i].height,
             dims.d[3] = m_InputInfo[i].width;
@@ -81,6 +86,7 @@ namespace vortex
         {
             m_OutputBlobs[i]->ToCpuAsync(m_Stream);
         }
+
         cudaStreamSynchronize(m_Stream);
     }
 }

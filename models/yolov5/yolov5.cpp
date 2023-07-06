@@ -34,10 +34,10 @@ namespace vortex
     {
         // assume single image inference.
         BlobInfo input_info = {
-            "images", 640, 640, 3
+            "images", 1, 3, 640, 640
         };
         BlobInfo output_info = {
-            "output", 25200, 85, 1
+            "output", 1, 25200, 85, 1
         };
         this->LoadEngine(engine_path, input_info, output_info);
 
@@ -50,8 +50,9 @@ namespace vortex
         cv::Mat temp;
         cv::resize(image, temp, cv::Size(640, 640));
         
-        uint32_t height = 640;
-        uint32_t width = 640;
+        uint32_t height = m_InputInfo.height;
+        uint32_t width = m_InputInfo.width;
+        
         uint32_t image_area = width * height;
         float* red_plane = m_InputBlob->dataCpu;
         float* green_plane = m_InputBlob->dataCpu + image_area;
@@ -75,10 +76,10 @@ namespace vortex
 
     void Yolov5::Postprocess(std::vector<DetBox>& results)
     {
-        uint32_t num_anchors = m_OutputInfo.width;
+        // NCHW
+        // 1x25200x85x1
+        uint32_t num_anchors = m_OutputInfo.channels;
         uint32_t num_elements = m_OutputInfo.height;
-        uint32_t num_classes = num_elements - 5;
-
         std::vector<DetBox> boxes;
         for (uint32_t i = 0; i < num_anchors; ++i)
         {
@@ -86,14 +87,15 @@ namespace vortex
             if (anchor_data[4] < m_ConfThresh)
                 continue;
             
-            auto m = maxValue(anchor_data, 5, num_elements);
             DetBox box;
+            auto m = maxValue(anchor_data, 5, num_elements);
+            box.class_index = m.first - 5;
             box.xmin = anchor_data[0] - anchor_data[2] / 2;
             box.ymin = anchor_data[1] - anchor_data[3] / 2;
             box.xmax = anchor_data[0] + anchor_data[2] / 2;
             box.ymax = anchor_data[1] + anchor_data[3] / 2;
             box.score = anchor_data[4];
-            box.class_index = m.first - 5;
+            
             boxes.push_back(box);
         }
 

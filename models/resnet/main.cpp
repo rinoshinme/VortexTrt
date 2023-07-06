@@ -11,11 +11,11 @@ namespace vortex
         ResNet(const std::string& engine_path)
         {
             BlobInfo input_info = {
-                "input", 224, 224, 3
+                "input", 1, 3, 224, 224
             };
 
             BlobInfo output_info = {
-                "output", 1000, 1, 1
+                "output", 1, 1000, 1, 1
             };
 
             this->LoadEngine(engine_path, input_info, output_info);

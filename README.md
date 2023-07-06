@@ -15,6 +15,8 @@ Tensorrt推理代码
 - alexnet
 - arcface(pytorch)
 - resnet50
+- // ast (audio spectrogram transformer)
+- yolov5 detector (cpu processing)
 
 
 ## TODO:

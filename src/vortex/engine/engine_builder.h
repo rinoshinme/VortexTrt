@@ -7,9 +7,12 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <map>
 #include "vortex/core/logger.h"
 #include "NvInfer.h"
-
+#include "vortex/core/common.h"
+#include "NvOnnxConfig.h"
+#include "NvOnnxParser.h"
 
 namespace vortex
 {
@@ -22,37 +25,46 @@ namespace vortex
 
     struct BuildOptions
     {
-        uint32_t optBatchSize = 1;
+        uint32_t minBatchSize = 1;
+        uint32_t optBatchSize = 16;
         uint32_t maxBatchSize = 16;
         size_t maxWorkspace = 4 << 30;
-        BuildPrecision precision = BuildPrecision::FP32;
-        uint32_t deviceIndex = 0;
         bool dynamicBatchSize = true;
+
+        BuildPrecision precision = BuildPrecision::FP32;
     };
 
     /*
     * Sinle Input/Output Engine Builder
     */
-    class EngineBuilder
+    class OnnxEngineBuilder
     {
     private:
         BuildOptions m_Options;
         Logger m_Logger;
         
-        nvinfer1::ICudaEngine* m_Engine;
+        // nvinfer1::ICudaEngine* m_Engine;
 
     public:
-        EngineBuilder(const BuildOptions& options);
+        OnnxEngineBuilder(const BuildOptions& options);
 
-        bool Build(const std::string& onnx_path, const std::string& engine_path, const std::vector<uint32_t>& input_dims);
+        bool Build(const std::string& onnx_path, const std::string& engine_path, 
+            const std::vector<uint32_t>& input_dims, const std::string& input_name);
+        
+        // support multiple input models
+        // bool Build(const std::string& onnx_path, const std::string& engine_path, 
+        //     const std::map<std::string, nvinfer1::Dim3>& input_info);
 
     private:
+        bool ConstructNetwork(
+            nvinfer1::IBuilder* builder,
+            nvinfer1::INetworkDefinition* network, 
+            nvinfer1::IBuilderConfig* config,
+            nvonnxparser::IParser* parser, 
+            const std::string& onnx_path, 
+            const std::vector<uint32_t>& input_dims, 
+            const std::string& input_name);
         
-    };
-
-    // TODO
-    class Int8EngineBuilder
-    {
-
+        bool SaveEngine(const nvinfer1::ICudaEngine& engine, const std::string& filepath);
     };
 }
